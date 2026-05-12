@@ -590,7 +590,11 @@ fn update_pragma(
             let value = parse_string(&value)?;
             let opts = CaptureDataChangesInfo::parse(&value, Some(CDC_VERSION_CURRENT))?;
             if opts.is_some() && connection.mvcc_enabled() {
-                bail_parse_error!("CDC is not supported in MVCC mode");
+                // REQ-238 experiment (bluecollardata/turso fork): bypass the
+                // CDC-in-MVCC bail to validate whether sync engine + native FTS
+                // can coexist on a Turso-type (--tursodb) cloud DB. CDC change
+                // records may be wrong under MVCC concurrency. NOT for merge.
+                tracing::warn!("REQ-238 experiment: bypassing CDC-in-MVCC bail; CDC tracking may produce incorrect change records under MVCC concurrency");
             }
             // InitCdcVersion handles everything at execution time:
             // - For enable: creates CDC table + version table, records version,
