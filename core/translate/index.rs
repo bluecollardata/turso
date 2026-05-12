@@ -63,7 +63,11 @@ fn validate(
         )
     }
     if connection.mvcc_enabled() && using.is_some() {
-        bail_parse_error!("Custom index modules are not supported in MVCC mode");
+        // REQ-238 experiment (bluecollardata/turso fork): bypass the
+        // FTS-in-MVCC bail (Check 2) to validate whether CREATE INDEX
+        // USING fts can function under MVCC on a Turso-type (--tursodb)
+        // cloud DB. Production safety unknown. NOT for merge.
+        tracing::warn!("REQ-238 experiment: bypassing Check 2 (Custom index modules in MVCC mode); production safety unknown");
     }
     if tbl_name.eq_ignore_ascii_case("sqlite_sequence") {
         crate::bail_parse_error!("table sqlite_sequence may not be indexed");
